@@ -82,6 +82,10 @@ disallow_untyped_defs = false
 check_untyped_defs = true
 
 [[tool.mypy.overrides]]
+module = "tests.benchmark.*"
+ignore_errors = true
+
+[[tool.mypy.overrides]]
 module = "h2.*"
 ignore_missing_imports = true
 

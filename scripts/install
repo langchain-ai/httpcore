@@ -16,4 +16,4 @@ fi
 
 "$PIP" install -U pip setuptools wheel
 "$PIP" install -e ".[asyncio,trio,http2,socks]"
-"$PIP" install coverage[toml] ruff mypy trio-typing pytest pytest-httpbin pytest-trio "werkzeug<3.1"
+"$PIP" install coverage[toml] ruff "mypy==1.10.1" trio-typing pytest pytest-httpbin pytest-trio "werkzeug<3.1" uvicorn
