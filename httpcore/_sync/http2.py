@@ -611,7 +611,7 @@ class HTTP2ConnectionByteStream:
                 if not isinstance(exc, RemoteProtocolError):
                     self._connection._reset_steam(
                         stream_id=self._stream_id,
-                        error_code=h2.settings.ErrorCodes.CANCEL,
+                        error_code=h2.settings.ErrorCodes.CANCEL,  # type: ignore[attr-defined]
                     )
                 self.close()
             raise exc

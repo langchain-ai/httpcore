@@ -101,9 +101,9 @@ def test_pool_recovers_from_connection_breakage(
             stream = response.extensions["network_stream"]
             assert stream.get_extra_info("is_readable") is False
 
-        assert stream.get_extra_info("is_readable") is True, (
-            "Should break by coming readable"
-        )
+        assert (
+            stream.get_extra_info("is_readable") is True
+        ), "Should break by coming readable"
 
         with Server(server_config).run_in_thread():
             assert len(pool.connections) == 1
