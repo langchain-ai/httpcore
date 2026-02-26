@@ -8,6 +8,7 @@ import typing
 
 import h2.config
 import h2.connection
+import h2.errors
 import h2.events
 import h2.exceptions
 import h2.settings
@@ -611,7 +612,7 @@ class HTTP2ConnectionByteStream:
                 if not isinstance(exc, RemoteProtocolError):
                     self._connection._reset_steam(
                         stream_id=self._stream_id,
-                        error_code=h2.settings.ErrorCodes.CANCEL,
+                        error_code=h2.errors.ErrorCodes.CANCEL,
                     )
                 self.close()
             raise exc

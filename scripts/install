@@ -3,7 +3,6 @@
 # Use the Python executable provided from the `-p` option, or a default.
 [ "$1" = "-p" ] && PYTHON=$2 || PYTHON="python3"
 
-REQUIREMENTS="requirements.txt"
 VENV="venv"
 
 set -x
@@ -16,4 +15,5 @@ else
 fi
 
 "$PIP" install -U pip setuptools wheel
-"$PIP" install -r "$REQUIREMENTS"
+"$PIP" install -e ".[asyncio,trio,http2,socks]"
+"$PIP" install coverage[toml] "ruff==0.5.6" "mypy==1.10.1" trio-typing pytest pytest-httpbin pytest-trio "werkzeug<3.1" uvicorn build twine
