@@ -126,12 +126,14 @@ def test_proxy_tunneling():
 
 
 class CapturingProxyStream(MockStream):
-    def __init__(self, buffer: list[bytes]) -> None:
+    def __init__(self, buffer: typing.List[bytes]) -> None:
         super().__init__(buffer)
-        self.writes: list[bytes] = []
-        self.server_hostname: str | None = None
+        self.writes: typing.List[bytes] = []
+        self.server_hostname: typing.Optional[str] = None
 
-    def write(self, buffer: bytes, timeout: typing.Optional[float] = None) -> None:
+    def write(
+        self, buffer: bytes, timeout: typing.Optional[float] = None
+    ) -> None:
         self.writes.append(buffer)
 
     def start_tls(
@@ -157,6 +159,7 @@ class CapturingProxyBackend(MockBackend):
     ) -> NetworkStream:
         self.stream = CapturingProxyStream(list(self._buffer))
         return self.stream
+
 
 
 def test_proxy_tunneling_uses_sni_hostname_extension():
@@ -285,7 +288,7 @@ def test_proxy_tunneling_with_403():
     """
     network_backend = MockBackend(
         [
-            b"HTTP/1.1 403 Permission Denied\r\n" b"\r\n",
+            b"HTTP/1.1 403 Permission Denied\r\n\r\n",
         ]
     )
 

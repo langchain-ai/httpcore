@@ -126,10 +126,10 @@ async def test_proxy_tunneling():
 
 
 class CapturingProxyStream(AsyncMockStream):
-    def __init__(self, buffer: list[bytes]) -> None:
+    def __init__(self, buffer: typing.List[bytes]) -> None:
         super().__init__(buffer)
-        self.writes: list[bytes] = []
-        self.server_hostname: str | None = None
+        self.writes: typing.List[bytes] = []
+        self.server_hostname: typing.Optional[str] = None
 
     async def write(
         self, buffer: bytes, timeout: typing.Optional[float] = None
