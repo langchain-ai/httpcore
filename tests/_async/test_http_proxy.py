@@ -125,6 +125,70 @@ async def test_proxy_tunneling():
         )
 
 
+class CapturingProxyStream(AsyncMockStream):
+    def __init__(self, buffer: typing.List[bytes]) -> None:
+        super().__init__(buffer)
+        self.writes: typing.List[bytes] = []
+        self.server_hostname: typing.Optional[str] = None
+
+    async def write(
+        self, buffer: bytes, timeout: typing.Optional[float] = None
+    ) -> None:
+        self.writes.append(buffer)
+
+    async def start_tls(
+        self,
+        ssl_context: ssl.SSLContext,
+        server_hostname: typing.Optional[str] = None,
+        timeout: typing.Optional[float] = None,
+    ) -> AsyncNetworkStream:
+        self.server_hostname = server_hostname
+        return self
+
+
+class CapturingProxyBackend(AsyncMockBackend):
+    stream: CapturingProxyStream
+
+    async def connect_tcp(
+        self,
+        host: str,
+        port: int,
+        timeout: typing.Optional[float] = None,
+        local_address: typing.Optional[str] = None,
+        socket_options: typing.Optional[typing.Iterable[SOCKET_OPTION]] = None,
+    ) -> AsyncNetworkStream:
+        self.stream = CapturingProxyStream(list(self._buffer))
+        return self.stream
+
+
+@pytest.mark.anyio
+async def test_proxy_tunneling_uses_sni_hostname_extension():
+    network_backend = CapturingProxyBackend(
+        [
+            b"HTTP/1.1 200 OK\r\n\r\n",
+            b"HTTP/1.1 200 OK\r\n",
+            b"Content-Length: 0\r\n",
+            b"\r\n",
+        ]
+    )
+
+    async with AsyncConnectionPool(
+        proxy=Proxy("http://localhost:8080/"),
+        network_backend=network_backend,
+    ) as proxy:
+        response = await proxy.request(
+            "GET",
+            "https://[2001:db8::1]/",
+            extensions={"sni_hostname": "example.com"},
+        )
+
+    assert response.status == 200
+    assert network_backend.stream.server_hostname == "example.com"
+    assert network_backend.stream.writes[0].startswith(
+        b"CONNECT [2001:db8::1]:443 HTTP/1.1\r\n"
+    )
+
+
 # We need to adapt the mock backend here slightly in order to deal
 # with the proxy case. We do not want the initial connection to the proxy
 # to indicate an HTTP/2 connection, but we do want it to indicate HTTP/2
@@ -224,7 +288,7 @@ async def test_proxy_tunneling_with_403():
     """
     network_backend = AsyncMockBackend(
         [
-            b"HTTP/1.1 403 Permission Denied\r\n" b"\r\n",
+            b"HTTP/1.1 403 Permission Denied\r\n\r\n",
         ]
     )
 

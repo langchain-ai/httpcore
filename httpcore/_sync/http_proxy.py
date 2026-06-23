@@ -51,6 +51,12 @@ def merge_headers(
     return default_headers + override_headers
 
 
+def _authority_form_target(host: bytes, port: int) -> bytes:
+    if b":" in host and not host.startswith(b"["):
+        return b"[" + host + b"]:" + str(port).encode("ascii")
+    return host + b":" + str(port).encode("ascii")
+
+
 class HTTPProxy(ConnectionPool):  # pragma: nocover
     """
     A connection pool that sends requests via an HTTP proxy.
@@ -268,7 +274,10 @@ class TunnelHTTPConnection(ConnectionInterface):
 
         with self._connect_lock:
             if not self._connected:
-                target = b"%b:%d" % (self._remote_origin.host, self._remote_origin.port)
+                target = _authority_form_target(
+                    self._remote_origin.host,
+                    self._remote_origin.port,
+                )
 
                 connect_url = URL(
                     scheme=self._proxy_origin.scheme,
@@ -307,9 +316,11 @@ class TunnelHTTPConnection(ConnectionInterface):
                 alpn_protocols = ["http/1.1", "h2"] if self._http2 else ["http/1.1"]
                 ssl_context.set_alpn_protocols(alpn_protocols)
 
+                sni_hostname = request.extensions.get("sni_hostname", None)
                 kwargs = {
                     "ssl_context": ssl_context,
-                    "server_hostname": self._remote_origin.host.decode("ascii"),
+                    "server_hostname": sni_hostname
+                    or self._remote_origin.host.decode("ascii"),
                     "timeout": timeout,
                 }
                 with Trace("start_tls", logger, request, kwargs) as trace:
